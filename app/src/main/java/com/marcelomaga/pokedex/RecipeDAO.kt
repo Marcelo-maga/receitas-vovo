@@ -11,14 +11,17 @@ import androidx.room.Update
 @Dao
 interface RecipeDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(recipe: Recipe)
+    fun insert(recipe: Recipe)
 
     @Update
-    suspend fun update(recipe: Recipe)
+    fun update(recipe: Recipe)
 
     @Delete
-    suspend fun delete(recipe: Recipe)
+    fun delete(recipe: Recipe)
 
     @Query("SELECT * FROM recipe_table")
     fun getAllRecipes(): MutableList<Recipe>
+
+    @Query("SELECT * FROM recipe_table WHERE id = :id ")
+    fun getRecipeById(id: Int): Recipe
 }

@@ -58,12 +58,13 @@ class NewRecipeActivity : ComponentActivity() {
         var ingredients by remember { mutableStateOf("") }
         var instructions by remember { mutableStateOf("") }
 
+        val intent = Intent(this, MainActivity::class.java)
+
         Scaffold(topBar = {
             TopAppBar(
                 title = { Text(text = "Nova Receita") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        val intent = Intent(this, MainActivity::class.java)
                         startActivity(intent)
                     }) {
                         Icon(
@@ -126,6 +127,8 @@ class NewRecipeActivity : ComponentActivity() {
                                             instructions = instructions
                                         )
                                     )
+
+                                    startActivity(intent)
                                 }
                             }
                         }

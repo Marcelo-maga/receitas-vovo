@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +36,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
@@ -59,19 +61,17 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
-
     private val scope = MainScope()
     private val recipes = mutableStateListOf<Recipe>()
     private val dao = InstanceRoom.database.recipeDAO()
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-
         setContent {
             PokedexTheme {
+
                 Scaffold(floatingActionButton = {
                     FloatingActionButton(onClick = {
                         val intent = Intent(this, NewRecipeActivity::class.java)
@@ -88,102 +88,104 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        ListaLugares(
-                            recipes,
-                            onEditClick = {
-                                println("cuzinh2")
-                            }
-                        )
-
-//                        FormRecipe()
+                        ListaLugares(recipes, onClick = { recipe ->
+                            val intent = Intent(this, RecipeActivity::class.java)
+                            intent.putExtra("id", recipe.id)
+                            startActivity(intent)
+                        })
 
                         getRecipes()
                     }
                 })
-
-
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        recipes.clear()
         getRecipes()
     }
 
     private fun getRecipes() {
         scope.launch {
             withContext(Dispatchers.Default) {
+                recipes.clear()
                 dao.getAllRecipes().forEach { recipe ->
                     recipes.add(recipe)
                 }
             }
         }
     }
-}
 
-@Composable
-fun ListaLugares(
-    recipes: SnapshotStateList<Recipe>, onEditClick: () -> Unit
-) {
-    var searchText by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(),
-        horizontalAlignment = Alignment.CenterHorizontally
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun ListaLugares(
+        recipes: SnapshotStateList<Recipe>, onClick: (Recipe) -> Unit,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        var searchText by remember { mutableStateOf("") }
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TextField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Buscar receitas...") },
-                textStyle = TextStyle(color = Color.White),
-            )
-        }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Buscar receitas...") },
+                    textStyle = TextStyle(color = Color.White),
+                )
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        LazyColumn(modifier = Modifier
-            .fillMaxWidth()
-            .padding(5.dp)) {
-            items(recipes) { recipe ->
-                key(recipe.id) {
-                    Card(
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .height(100.dp)
-                            .fillMaxWidth()
-                    ) {
-                        Row(modifier = Modifier
-                            .padding(10.dp)
-                            .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Column {
-                                Text(text = "${recipe.name}", fontWeight = FontWeight.Bold, fontSize = 25.sp)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(5.dp)
+            ) {
+                items(recipes) { recipe ->
+                    key(recipe.id) {
+                        Card(onClick = {
+                            onClick(recipe)
+                        },
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .height(100.dp)
+                                .fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row {
+                                    Column {
+                                        Text(
+                                            text = "${recipe.name}",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 25.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        Text(
+                                            text = "${recipe.instructions}",
+                                            fontSize = 15.sp
+                                        )
+                                    }
+//                                    Button {
+//
+//                                    }
+                                }
+
+
                             }
-//                            Column {
-//                                IconButton(onClick = { onEditClick() }) {
-//                                    Icon(
-//                                        imageVector = Icons.Default.Edit,
-//                                        contentDescription = ""
-//                                    )
-//                                }
-//                                IconButton(onClick = {}) {
-//                                    Icon(
-//                                        imageVector = Icons.Default.Delete,
-//                                        contentDescription = ""
-//                                    )
-//                                }
-//                            }
-
                         }
                     }
                 }
@@ -191,3 +193,4 @@ fun ListaLugares(
         }
     }
 }
+
