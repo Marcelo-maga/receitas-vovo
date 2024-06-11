@@ -56,6 +56,7 @@ class RecipeActivity : ComponentActivity() {
         }
 
         val intent = Intent(this, MainActivity::class.java)
+        val updateIntent = Intent(this, UpdateRecipeActivity::class.java)
 
         setContent {
             PokedexTheme {
@@ -73,7 +74,10 @@ class RecipeActivity : ComponentActivity() {
                             }
                         },
                         actions = {
-                            IconButton(onClick = { /* Função de editar */ }) {
+                            IconButton(onClick = {
+                                updateIntent.putExtra("id", recipe?.id)
+                                startActivity(updateIntent)
+                            }) {
                                 Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar")
                             }
                             IconButton(onClick = {

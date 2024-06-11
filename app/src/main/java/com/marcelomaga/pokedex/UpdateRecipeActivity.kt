@@ -38,16 +38,33 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class NewRecipeActivity : ComponentActivity() {
+class UpdateRecipeActivity : ComponentActivity() {
     private val dao = InstanceRoom.database.recipeDAO()
     private val scope = MainScope()
+    private var recipe by mutableStateOf<Recipe?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val id = intent?.getIntExtra("id", -1) ?: -1
+        if (id != -1) {
+            fetchRecipe(id)
+        }
+
         setContent {
             PokedexTheme {
                 FormRecipe()
             }
+        }
+    }
+
+    private fun fetchRecipe(id: Int) {
+        scope.launch {
+            val fetchedRecipe = withContext(Dispatchers.IO) {
+                dao.getRecipeById(id)
+            }
+
+            recipe = fetchedRecipe
         }
     }
 
@@ -58,11 +75,17 @@ class NewRecipeActivity : ComponentActivity() {
         var ingredients by remember { mutableStateOf("") }
         var instructions by remember { mutableStateOf("") }
 
+        recipe?.let {
+            name = it.name
+            ingredients = it.ingredients
+            instructions = it.instructions
+        }
+
         val intent = Intent(this, MainActivity::class.java)
 
         Scaffold(topBar = {
             TopAppBar(
-                title = { Text(text = "Nova Receita") },
+                title = { Text(text = "Editar Receita") },
                 navigationIcon = {
                     IconButton(onClick = {
                         startActivity(intent)
@@ -120,8 +143,9 @@ class NewRecipeActivity : ComponentActivity() {
                         scope.launch {
                             withContext(Dispatchers.Default) {
                                 if (name.isNotEmpty() && ingredients.isNotEmpty() && instructions.isNotEmpty()) {
-                                    dao.insert(
+                                    dao.update(
                                         Recipe(
+                                            id = recipe!!.id,
                                             name = name,
                                             ingredients = ingredients,
                                             instructions = instructions
@@ -137,7 +161,7 @@ class NewRecipeActivity : ComponentActivity() {
                         .height(50.dp)
 
                 ) {
-                    Text("Escrever Receita")
+                    Text("Editar Receita")
                 }
             }
         })
